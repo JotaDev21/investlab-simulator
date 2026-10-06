@@ -1,0 +1,28 @@
+"use client";
+import { explainConcepts } from "./concept-text";
+import { ConceptText } from "./concept-text";
+import { useState } from "react";
+import { Check, LockKeyhole } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import type { Simulation } from "@/lib/simulation/types";
+import { COURSE, LearningProgress, availableLevel } from "@/lib/lab/LearningEngine";
+import { lessonsFor, DetailedProgress, lessonExperimentDone, completeLesson } from "@/lib/lab/CourseEngine";
+type Props = {
+    s: Simulation;
+    progress: LearningProgress;
+    save: (p: LearningProgress) => void;
+    onNavigate: (v: string) => void;
+};
+export function CourseLab({ s, progress, save, onNavigate }: Props) {
+    const p = progress as DetailedProgress, [selected, setSelected] = useState<number | null>(null), [lessonIndex, setLessonIndex] = useState(0), [answer, setAnswer] = useState<number | null>(null), [review, setReview] = useState(""), [error, setError] = useState(""), max = availableLevel(p), lessons = selected === null ? [] : lessonsFor(selected), lesson = lessons[lessonIndex], pending = lesson && p.lessonPending?.[lesson.id], done = lesson && (p.lessonCompleted?.includes(lesson.id) || p.completed.includes(lesson.level)), correct = lesson && answer === lesson.correct;
+    function choose(index: number) { setLessonIndex(index); setAnswer(null); setReview(""); setError(""); }
+    const navigate = () => { const level = lesson.level; setSelected(null); onNavigate(level === 0 || level === 6 || level === 8 ? "portfolio" : level === 1 || level === 2 || level === 9 ? "investments" : level === 7 ? "economy" : level === 10 ? "advanced" : level === 11 ? "universes" : "market"); };
+    return explainConcepts(<><div className="course-progress"><span>{p.completed.length} de 12 níveis concluídos · {COURSE.reduce((n, c) => n + lessonsFor(c.level).length, 0)} aulas</span><div><i style={{ width: `${p.completed.length / 12 * 100}%` }}/></div><strong>Explicação → exemplo → resposta → experimento → revisão escrita</strong></div><div className="lessons-grid">{COURSE.map(c => <button className="panel lesson-card" key={c.level} disabled={c.level > max} onClick={() => { setSelected(c.level); choose(0); }}><span className="lesson-number">{c.level === 11 ? "MASTER" : `NÍVEL ${c.level}`} {p.completed.includes(c.level) ? <Check size={16}/> : c.level > max ? <LockKeyhole size={15}/> : null}</span><h2>{c.title}</h2><p>{c.concepts}</p><small>{lessonsFor(c.level).length} aulas · {p.completed.includes(c.level) ? "Nível concluído" : `${lessonsFor(c.level).filter(l => p.lessonCompleted?.includes(l.id)).length} concluídas`}</small><span className="text-button">{p.completed.includes(c.level) ? "Revisar" : "Começar aula"}</span></button>)}</div>
+ <Dialog open={!!lesson} onOpenChange={v => { if (!v)
+        setSelected(null); }}><DialogContent className="lab-dialog"><DialogTitle>{lesson?.title}</DialogTitle><DialogDescription className="dialog-description">Cada tema tem explicação, exemplo e experimento próprios.</DialogDescription>{lesson && <><details><summary>Aulas deste nível · {lessonIndex + 1} de {lessons.length}</summary><div className="quiz-answers">{lessons.map((l, i) => <button className="button secondary" key={l.id} onClick={() => choose(i)}>{p.lessonCompleted?.includes(l.id) || p.completed.includes(l.level) ? "✓ " : ""}{l.title}</button>)}</div></details><p><ConceptText text={lesson.text}/></p><div className="math-example"><ConceptText text={lesson.example}/></div>{done ? <><p className="lime-text">Aula concluída.</p><p>{p.reviews?.[lesson.id] ?? "Crédito preservado do curso anterior. Você pode revisar o conteúdo ampliado."}</p><button className="button primary" disabled={lessonIndex >= lessons.length - 1} onClick={() => choose(lessonIndex + 1)}>Próxima aula</button></> : pending ? <><h3>Seu experimento</h3><p><ConceptText text={lesson.experiment}/></p><button className="button secondary" onClick={navigate}>Abrir laboratório</button><p className="field-hint">{lessonExperimentDone(s, lesson, p) ? "O período ou ação do experimento foi registrado. Descreva o que mudou e por quê." : "O motor ainda não registrou a ação ou o período necessário. Abrir a aula não a conclui."}</p><label className="field-label">O que observei? Como isso se relaciona com minha decisão?<textarea aria-label="Revisão do experimento" className="standard-input" value={review} onChange={e => setReview(e.target.value)}/></label>{error && <p className="negative">{error}</p>}<button className="button primary" disabled={!lessonExperimentDone(s, lesson, p) || review.trim().length < 12} onClick={() => { try {
+        save(completeLesson(p, lesson.id, review));
+    }
+    catch (e) {
+        setError((e as Error).message);
+    } }}>Revisar e concluir após experimentar</button></> : <><h3>{lesson.question}</h3><div className="quiz-answers">{lesson.answers.map((a, i) => <button className={`button secondary ${answer === i ? (correct ? "answer-correct" : "answer-wrong") : ""}`} key={a} onClick={() => { setAnswer(i); save({ ...p, attempts: { ...p.attempts, [lesson.id]: (p.attempts[lesson.id] ?? 0) + 1 } }); }}>{a}</button>)}</div>{answer !== null && <p className={correct ? "lime-text" : "negative"}>{correct ? "Raciocínio correto. " : "Reveja o raciocínio: "}{lesson.reason}</p>}<button className="button primary" disabled={!correct} onClick={() => save({ ...p, lessonPending: { ...p.lessonPending, [lesson.id]: { since: s.date, transaction: s.transactions.length, universeId: s.lab!.universeId } } })}>Ir ao experimento</button></>}</>}</DialogContent></Dialog></>);
+}

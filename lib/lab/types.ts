@@ -1,0 +1,25 @@
+import type { Simulation } from "../simulation/types";
+export type AssetClass = "stock" | "fii" | "etf" | "international" | "reit" | "foreign-bond" | "fund" | "pension" | "crypto";
+export type Currency = "BRL" | "USD" | "EUR";
+export type Fundamentals = { revenue: string; profit: string; ebitda: string; debt: string; cash: string; equity: string; shares: string; growth: number; capex: string; operatingCash: string };
+export type Asset = { id: string; name: string; class: AssetClass; sector: string; country: string; currency: Currency; initialPrice: string; highWater?:string; price: string; annualDividend: number; volatility: number; rng: number; momentum: number; adminBps: number; performanceBps: number; settlementDays: number; quotationDays?:number; circulatingSupply?:string; history?:{date:string;price:string;totalIndex:number;benchmarkIndex?:number}[]; benchmark: string; weights?: { id: string; weight: number }[]; indexWeights?:{id:string;weight:number}[]; fundamentals?: Fundamentals; vacancy?: number; fiiType?:"brick"|"paper"|"hybrid"; creditLoss?:string; nav?: string; taxCategory: "equity" | "fii" | "foreign" | "fund" | "crypto" | "pension"; bankrupt?: boolean; contracts?: string; indexer?: string; feesPaid: string };
+export type Holding = { assetId: string; qty: string; cost: string; localCost: string; opened: string; realized: string; income: string; comeCotasPaid: string; pensionRegime?: "progressive" | "regressive"; pensionLots?:{qty:string;cost:string;localCost:string;date:string}[] };
+export type Order = { pensionRegime?: "progressive" | "regressive"; id: string; assetId: string; side: "buy" | "sell"; kind: "market" | "limit" | "stop" | "stop-limit"; qty: string; limit?: string; stop?: string; triggered: boolean; status: "open" | "executed" | "cancelled" | "rejected"; created: string; reason?: string; note: string; executedDate?: string };
+export type Receipt = { id: string; amount: string; due: string; reason: string };
+export type CashAudit = { id: string; date: string; source: string; delta: string; before: string; after: string; detail: string };
+export type DiaryEntry = { id: string; date: string; assetId: string; positionId?:string; note: string; price: string; operation: string; reviews?:{date:string;note:string;price:string}[] };
+export type Schedule = { id: string; amount: string; next: string; intervalDays: number; monthly: boolean; enabled: boolean };
+export type ShortPosition = { id: string; assetId: string; qty: string; entryPrice: string; collateral: string; borrowFees?:string; opened: string };
+export type OptionPosition = { id: string; assetId: string; kind: "call" | "put"; qty: string; strike: string; premium: string; expires: string; opened: string; model?: "black-scholes" };
+export type FuturePosition = { id:string; assetId:string; side:"long"|"short"; qty:string; multiplier:string; entryPrice:string; lastPrice:string; collateral:string; expires:string; opened:string; pnl:string };
+export type Lab = {
+  schema: 2; universeId: string; parentUniverseId?:string; name: string; startDate: string; marketStart: string; difficulty: "calm" | "normal" | "stress"; settings: { initial: string; seed: number; startDate: string; inflationBps: number; interestBps: number; difficulty: "calm" | "normal" | "stress" };
+  assets: Asset[]; holdings: Holding[]; orders: Order[]; receipts: Receipt[]; shorts: ShortPosition[]; options: OptionPosition[]; audit: CashAudit[]; diary: DiaryEntry[]; schedules: Schedule[];
+  shock?:{kind:"financial-crisis"|"inflation-shock"|"commodity-shock"|"euphoria"|"recovery";started:string;until:string;strength:number};
+  futures?: FuturePosition[]; pendingRedemptions?: {id:string;assetId:string;qty:string;requested:string;quoteDate:string;note:string}[];
+  contributions: string; withdrawn: string; income: string; taxPaid: string; realized: string; debt: string; usd: string; eur: string; macroRng: number; sentiment: number; unemployment: number; gdpGrowth: number; gdp: string; riskPremium: number; phase: "expansion" | "slowdown" | "recession" | "recovery"; curve: { years: number; bps: number }[];
+  news: { id: string; date: string; title: string; detail: string }[]; events: { id: string; date: string; type: string; assetId?: string; detail: string }[]; subscriptionRights: { id: string; assetId: string; qty: string; price: string; expires: string; used: boolean }[];
+  taxPolicy: string; taxRules?:import("./TaxEngine").TaxRules; fgcClaims: { date: string; amount: string }[]; failedIssuers: string[]; bondCoupons: Record<string, { date: string; count: number; grossPaid: string; inflationAtBuy: string; marketAtBuy?:number }>;
+  target: Record<string, number>; targetAssets?:Record<string,string>; rebalanceEvery: number; lastRebalance: string; pauses: string[]; viewReal: boolean; challenges: { id: string; started: string }[];
+};
+export type StateAction = (s: Simulation) => Simulation;

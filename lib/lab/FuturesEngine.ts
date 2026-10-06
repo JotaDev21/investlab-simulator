@@ -1,0 +1,23 @@
+import type { Simulation } from "../simulation/types";
+import type { FuturePosition } from "./types";
+import { ensureLab } from "./PersistenceEngine";
+import { assetById,assetBRL } from "./EquityEngine";
+import { decimal,units,D,quantity } from "./decimal";
+import { addDays,daysBetween } from "../simulation/clock";
+import { sum } from "../simulation/money";
+import { gainTax } from "./TaxEngine";
+import { cashEvent,event } from "./EventEngine";
+export function futureQuote(s:Simulation,assetId:string,expires:string){const l=ensureLab(s),days=Math.max(0,daysBetween(s.date,expires)),a=["USD","EUR"].includes(assetId)?null:assetById(s,assetId),spot=a?assetBRL(s,a):assetId==="USD"?l.usd:l.eur,carry=new D(1+s.economy.selicBps/10000).ln().minus(a?.annualDividend??0);return units(decimal(spot).mul(carry.mul(days/365).exp()));}
+export function futureUnsettled(s:Simulation,f:FuturePosition){return units(decimal(futureQuote(s,f.assetId,f.expires)).minus(decimal(f.lastPrice)).mul(f.qty).mul(f.multiplier).mul(f.side==="long"?1:-1));}
+export function openFuture(s:Simulation,assetId:string,side:"long"|"short",qtyInput:string,days:number,multiplierInput="1",note=""){
+ if(!Number.isInteger(days)||days<1||days>365)throw new Error("Use vencimento de 1 a 365 dias.");if(!["USD","EUR"].includes(assetId)&&assetById(s,assetId).bankrupt)throw new Error("Ativo insolvente indisponível para novo futuro.");const qty=quantity(qtyInput),multiplier=quantity(multiplierInput),l=ensureLab(s),expires=addDays(s.date,days),price=futureQuote(s,assetId,expires),notional=decimal(price).mul(qty).mul(multiplier),collateral=units(notional.mul(.15));if(decimal(s.cash).lt(decimal(collateral))||decimal(collateral).lt(.01))throw new Error("Saldo insuficiente para margem inicial de 15%, ou contrato abaixo de um centavo.");
+ cashEvent(s,(-BigInt(collateral)).toString(),"future-margin","Garantia segregada; não é despesa nem limite de perda.");l.futures!.push({id:`future-${s.nextId++}`,assetId,side,qty,multiplier,entryPrice:price,lastPrice:price,collateral,expires,opened:s.date,pnl:"0"});event(s,"order","Futuro aberto",`${side} ${qty} × multiplicador ${multiplier} de ${assetId}; ajuste diário e manutenção de 8% do nocional.`,collateral,assetId);
+ if(note.trim())l.diary.push({id:`diary-${s.nextId++}`,date:s.date,assetId,note:note.trim(),price,operation:`future-${side}`});
+}
+function recognizeDebt(s:Simulation){if(BigInt(s.cash)<0n){const l=ensureLab(s);l.debt=sum([l.debt,(-BigInt(s.cash)).toString()]);cashEvent(s,(-BigInt(s.cash)).toString(),"debt-recognition","Perda de futuro transferida para dívida; patrimônio permanece reconciliado.");}}
+function adjust(s:Simulation,f:FuturePosition){const delta=futureUnsettled(s,f);f.pnl=sum([f.pnl,delta]);f.lastPrice=futureQuote(s,f.assetId,f.expires);if(BigInt(delta)!==0n)cashEvent(s,delta,"future-adjustment",`Ajuste ${f.id}: (preço atual − anterior) × quantidade × multiplicador × direção.`);}
+export function closeFuture(s:Simulation,id:string){const l=ensureLab(s),f=l.futures!.find(f=>f.id===id);if(!f)throw new Error("Futuro não encontrado.");adjust(s,f);const tax=gainTax(f.pnl,"equity",l.taxPolicy);cashEvent(s,(BigInt(f.collateral)-BigInt(tax)).toString(),"future-close","Liberação da garantia menos imposto sobre ajustes positivos acumulados.");l.taxPaid=sum([l.taxPaid,tax]);l.realized=sum([l.realized,(BigInt(f.pnl)-BigInt(tax)).toString()]);l.futures=l.futures!.filter(x=>x.id!==id);recognizeDebt(s);event(s,s.date>=f.expires?"maturity":"order","Futuro encerrado","Ajustes, tributos e margem registrados separadamente; eventual déficit é dívida.",f.pnl,f.assetId);}
+export function stepFutures(s:Simulation){for(const f of [...ensureLab(s).futures!]){adjust(s,f);const maintenance=decimal(f.lastPrice).mul(f.qty).mul(f.multiplier).mul(.08);if(s.date>=f.expires)closeFuture(s,f.id);else if(decimal(s.cash).plus(decimal(f.collateral)).lt(maintenance)||BigInt(s.cash)<0n){event(s,"margin","Chamada de margem em futuro",`Liquidação compulsória de ${f.id}. Gaps podem superar a garantia.`,undefined,f.assetId);closeFuture(s,f.id);}}}
+export function futuresValue(s:Simulation){return sum(ensureLab(s).futures!.map(f=>sum([f.collateral,futureUnsettled(s,f)])));}
+export function futuresProvision(s:Simulation){const l=ensureLab(s);return sum(l.futures!.map(f=>gainTax(sum([f.pnl,futureUnsettled(s,f)]),"equity",l.taxPolicy)));}
+export function hedgeScenarios(spot:string,holdingQty:string,futureQty:string,multiplier:string){const S=decimal(spot),h=new D(holdingQty),q=new D(futureQty).mul(multiplier);return[-.5,-.3,-.1,0,.1,.3,.5].map(change=>({change:change*100,unhedged:S.mul(h).mul(change).toNumber(),future:S.mul(q).mul(-change).toNumber(),hedged:S.mul(h.minus(q)).mul(change).toNumber()}));}

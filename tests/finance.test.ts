@@ -43,7 +43,7 @@ test("vencimento ocorre no dia exato, sem juros depois de vencer", () => {
   assert.equal(advance(after,300).cash,after.cash); assert.equal(after.transactions.filter(t => t.type === "maturity").length,1);
 });
 test("alteração do CDI afeta só o período posterior", () => {
-  const s = invest(createSimulation(),"cdi","1000"), first = advance(s,90); assert.equal(roundCents(first.positions[0].balance),roundCents(accrue(money("1000"),annualRate(getProduct("cdi"),s.economy),90)));
+  const s = invest(createSimulation(1),"cdi","1000"), first = advance(s,90); assert.equal(roundCents(first.positions[0].balance),roundCents(accrue(money("1000"),annualRate(getProduct("cdi"),s.economy),90)));
   const next = advance(first,1); assert.equal(next.positions[0].balance,accrue(first.positions[0].balance,annualRate(getProduct("cdi"),first.economy))); assert.notEqual(first.economy.cdiBps,s.economy.cdiBps);
 });
 test("avanço em bloco e 365 avanços diários são idênticos", () => {

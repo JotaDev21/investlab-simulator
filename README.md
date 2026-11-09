@@ -1,8 +1,8 @@
-# InvestLab
+# Simulador InvestLab
 
 Simulador educacional de investimentos com dinheiro fictício. Dá para montar uma carteira, avançar o calendário e comparar o efeito de juros, aportes e cenários econômicos.
 
-## Experimente offline
+## Como usar offline
 
 Baixe [InvestLab.html](InvestLab.html) e abra o arquivo no navegador. A simulação roda no próprio HTML, com salvamento local e exportação do cenário em JSON.
 

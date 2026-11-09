@@ -13,6 +13,7 @@ export default defineConfig({
     outDir: ".sites-runtime/standalone-build",
     emptyOutDir: true,
     cssCodeSplit: false,
+    license: true,
     lib: {
       entry: fileURLToPath(new URL("./main.tsx", import.meta.url)),
       name: "InvestLab",

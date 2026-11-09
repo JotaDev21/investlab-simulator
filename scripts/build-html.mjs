@@ -5,10 +5,20 @@ import path from "node:path";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 await build({ configFile: path.join(root, "standalone/vite.config.mjs") });
-const css = readFileSync(path.join(root, ".sites-runtime/standalone-build/investlab.css"), "utf8");
-const script = readFileSync(path.join(root, ".sites-runtime/standalone-build/investlab.js"), "utf8");
+const buildDir = path.join(root, ".sites-runtime/standalone-build");
+const css = readFileSync(path.join(buildDir, "investlab.css"), "utf8");
+const script = readFileSync(path.join(buildDir, "investlab.js"), "utf8");
 const favicon = readFileSync(path.join(root, "public/favicon.svg"), "utf8");
+const bundledLicenses = readFileSync(path.join(buildDir, ".vite/license.md"), "utf8");
+const shadcnLicense = readFileSync(path.join(root, "vendor/shadcn-LICENSE.md"), "utf8");
+const licenses = [bundledLicenses, shadcnLicense]
+  .join("\n\n")
+  .replaceAll("-->", "--&gt;")
+  .replaceAll("--!>", "--!&gt;");
 const html = `<!doctype html>
+<!-- Third-party licenses
+${licenses}
+-->
 <html lang="pt-BR" class="dark">
 <head>
 <meta charset="utf-8">

@@ -1,68 +1,28 @@
-# InvestLab — laboratório educacional em um HTML
+# InvestLab
 
-Abra **InvestLab.html**, na raiz deste repositório ou na pasta acima deste projeto, com dois cliques no navegador. Não precisa instalar nada, iniciar servidor ou conectar à internet. Todo dinheiro, emissor, empresa, preço, moeda e evento é fictício. Não há ordens reais nem indicação automática do que comprar.
+Simulador educacional de investimentos com dinheiro fictício. Dá para montar uma carteira, avançar o calendário e comparar o efeito de juros, aportes e cenários econômicos.
 
-A expansão mantém o dashboard, os dois CDBs originais, a máquina do tempo, o histórico, as projeções e a exportação. Os arquivos **InvestLab-v1.html** e **InvestLab-v2.html** preservam as entregas anteriores. A revisão atual corrige as lacunas registradas em **COBERTURA.md**. O HTML novo usa a mesma chave de salvamento para migrar o cenário anterior e mantém aplicações e fechamentos existentes. Os novos mercados começam na data dessa migração; não são inseridas cotações fictícias no passado já vivido.
+## Experimente offline
 
-## O que foi acrescentado
+Baixe [InvestLab.html](InvestLab.html) e abra o arquivo no navegador. A simulação roda no próprio HTML, com salvamento local e exportação do cenário em JSON.
 
-- 15 títulos de renda fixa: Tesouros Selic, prefixados e IPCA+, com ou sem cupons; CDBs, LCI, LCA, LC, debêntures, CRI e CRA. Cada produto define emissor, prazo, taxa/indexador, carência, liquidez, cupons, garantia e perfil tributário.
-- 43 ativos adicionais: empresas de onze setores brasileiros, FIIs de seis segmentos, oito ETFs, ações em USD/EUR, ETF internacional, título estrangeiro, REIT, cinco fundos, PGBL/VGBL e quatro criptoativos em área própria.
-- Compra, venda, frações, custo médio, resultado realizado/não realizado, proventos, JCP, eventos societários, subscrições e ordens de mercado/limite/stop/stop-limit. O livro de ordens é explicitamente ilustrativo.
-- Demonstrações fictícias e indicadores com significado, fórmula, utilidade, limitações, exemplo e inspeção dos valores efetivamente utilizados. Resultados empresariais evoluem trimestralmente.
-- Macroeconomia com atividade, emprego, câmbio, prêmio de risco, curva de juros e transições estocásticas entre expansão, desaceleração, recessão e recuperação. Notícias descrevem eventos do motor; não escolhem preços.
-- Marcação a mercado por fluxos descontados, laboratório de sensibilidade de preços, duration/convexidade aproximadas e comparação entre saldo contratual e venda antecipada.
-- Analisador com capital externo separado do retorno, renda recebida, impostos efetivos/provisionados, TWR, volatilidade, drawdown, Sharpe, beta, alfa e correlação com o índice Brasil. Exposições por ativo, classe, emissor, setor, país, moeda e indexador; matriz de correlação entre posições e histórico de retorno total dos ativos.
-- Aporte único, mensal ou por intervalo; gasto fictício; alocação-alvo e rebalanceamento manual/periódico de ativos elegíveis. Proventos ficam no caixa até o usuário decidir gastar ou investir.
-- Relógio automático 1x/10x/100x e pausas por vencimento, operação, provento, resultado ou decisão econômica. Calendário, diário de teses, desafios e glossário pesquisável.
-- Curso de 12 níveis e 97 aulas, de zero a Master: explicação curta, exemplo, resposta, experimento e revisão escrita. Cada tema possui sua própria aula; um nível novo só termina depois de todas as aulas. Créditos já obtidos no curso anterior são preservados. Abrir uma aula não a conclui. Opções e short exigem níveis 0–9 e aceite explícito dos riscos.
-- Opções compradas, payoff, liquidação financeira no vencimento, short, aluguel, margem, encerramento forçado e reconhecimento de dívida. Futuros são contratos persistidos com margem, ajustes diários, vencimento, encerramento voluntário/compulsório e dívida. Opções novas usam Black–Scholes europeu, com gregas numéricas, volatilidade implícita por bisseção e venda antecipada. O experimento de hedge compara a exposição combinada.
-- Universos independentes com saldo, seed, período, dificuldade, juros e inflação próprios. Replay preserva condições iniciais e trajetória externa dos universos novos; compras não alteram as sementes do mercado. Um gráfico compara estratégias nas mesmas datas, com TWR separado dos aportes.
+- Compare títulos de renda fixa, ações e outros ativos do mercado simulado.
+- Use universos separados para repetir uma estratégia em condições comparáveis.
+- Explore a carteira pelo analisador de retorno, risco e exposição.
 
-## Usar e guardar o progresso
+Empresas, preços, eventos e ordens são fictícios. O modelo foi feito para aprendizado. As simplificações de mercado e de tributação estão documentadas no histórico.
 
-Comece pela aba **Aprender** ou experimente um investimento. Use **Mercados** para analisar empresas e registrar ordens; **Analisador** mostra fontes de retorno e risco. **Universos** permite criar outra experiência e voltar à anterior.
+## Desenvolvimento
 
-O navegador guarda o cenário e os universos localmente. Há salvamento simples e uma cópia em IndexedDB para históricos maiores. Se nenhum armazenamento funcionar, a aplicação avisa. **Meu cenário → Exportar cenário** e o botão Exportar no histórico permitem guardar uma cópia JSON do universo atual. Exportações também conservam a trilha de auditoria. Não há conta ou sincronização; mover o HTML, trocar navegador/perfil ou apagar dados do navegador pode separar ou apagar o armazenamento. A importação de JSON não é oferecida nesta edição.
+Requer Node.js 22.13 ou superior.
 
-## Arquitetura
+    npm ci
+    npm run dev
+    npm test
+    npm run typecheck
+    npm run build:html
 
-Os motores em `lib/lab/` são independentes de React: VirtualClock, EconomyEngine, MarketEngine, FixedIncomeEngine, EquityEngine, FundEngine, PensionEngine, TaxEngine, PortfolioEngine, CorporateActionsEngine, OrderEngine, LearningEngine, EventEngine, NewsEngine, PersistenceEngine, UniverseEngine, CalculationEngine, OptionPricingEngine, FuturesEngine, CreditEngine, CourseEngine, ChallengeEngine, AnalyticsEngine, AnalysisEngine, PensionLotEngine, DiaryEngine e Coordinator. `BrowserStorage` cuida da persistência local maior. Os módulos originais em `lib/simulation/` continuam responsáveis pelo contrato existente, datas, dinheiro e fechamento diário.
+Os motores de simulação ficam em [lib/lab](lib/lab/) e [lib/simulation](lib/simulation/). A interface web usa React e TypeScript. O build de [standalone](standalone/) gera a edição em um único HTML.
 
-A interface fica em `app/` e `components/investlab/`; o estado em `hooks/use-simulation.ts`. O HTML é gerado pelo entrypoint `standalone/main.tsx`, pela configuração Vite independente e por `scripts/build-html.mjs`, que embute JavaScript, CSS e favicon.
-
-## Convenções e limites do modelo
-
-**Dinheiro:** unidades monetárias com 18 casas armazenadas como strings de inteiros; operações novas usam decimal.js com precisão de 48 dígitos e arredondamento HALF_UP. Não se somam saldos em ponto flutuante. Liquidações de ações/fundos e tributos arredondam aos centavos; avaliações internas mantêm mais casas. Quantidades digitadas aceitam oito casas; eventos internos podem gerar frações maiores e o resgate integral dessas cotas é permitido.
-
-**Tempo e taxas:** calendário UTC, dias corridos Actual/365, inclusive fins de semana. Juros anuais compostos usam taxa diária equivalente, não divisão por 365. Meses preservam a data ou o último dia válido. A simulação não reproduz feriados, horários de pregão ou calendário financeiro de 252 dias úteis. Prazos D+N são dias corridos. A calculadora previdenciária usa meses equivalentes de 365/12 dias, declarados na tela.
-
-**CDI:** preserva a metodologia original: percentual de participação aplicado à taxa efetiva anual, depois capitalização diária. 110% de CDI anual de 10% corresponde a 11% a.a. no modelo. Produtos reais podem usar participação diária e convenções distintas. Há um benchmark separado de 100% CDI, sem substituir a comparação original de 110%.
-
-**Mercado:** empresas, índices, preços e setores são aproximações educacionais. Ruído determinístico, fundamentos, expectativas, momentum, atividade e juros participam dos retornos. ETFs usam cestas reduzidas de referência; índices não reproduzem composições reais. Componentes estrangeiros são convertidos para BRL com sua moeda. Ouro e título estrangeiro são proxies simplificados. Fundos têm um milhão de cotas de referência; compras do aluno não afetam preços externos. Distribuições reduzem a cotação ex-provento.
-
-**Títulos:** negociáveis usam valor presente dos fluxos e alterações da curva/spread relativos à compra. IPCA+ usa fluxos em poder de compra atual e taxa real estimada; inflação futura é incerta. Tesouro Selic é aproximado pelo saldo acumulado, sem microestrutura de spread. Cupons saem do título e entram líquidos no caixa. Não há leilão, spread de compra/venda real, tarifas de custódia ou renegociação do crédito.
-
-**Tributos:** perfil versionado `lab-2026-v1`, congelado para o exercício, sem alegação de reproduzir integralmente a legislação de 2026. Renda fixa conserva IR regressivo e IOF da versão anterior; produtos marcados isentos seguem essa configuração. Ações, exterior, cripto e derivativos usam 15% sobre ganho positivo realizado; FIIs usam 20%; JCP usa 15%. Não há isenção mensal, compensação de prejuízo, day trade ou declaração fiscal. A aba Analisador permite criar uma versão personalizada para taxas de ganho, distribuição, come-cotas e limites de garantia, persistida somente nesse universo. IR/IOF de títulos e regimes previdenciários continuam no perfil declarado. Três fundos têm come-cotas de 15% no último dia de maio/novembro, com crédito proporcional para não cobrar o mesmo imposto novamente. Não são reproduzidas todas as classificações fiscais reais dos fundos.
-
-**Fundos e previdência:** novos fundos têm cotização D+0/D+1/D+2 e pagamento D+N contado depois da cotização. Cotas aguardando cotização continuam expostas ao NAV e ficam reservadas contra venda duplicada; recebíveis posteriores ficam separados do caixa. Fundos salvos na edição anterior preservam cotização D+0. Administração usa custo anual equivalente; performance do multimercado usa novos ganhos acima da referência e marca máxima diária, uma simplificação do mecanismo contratual real. Previdência distingue PGBL sobre total e VGBL sobre ganho, com regimes regressivo/progressivo didáticos. Cada contribuição previdenciária tem lote próprio; resgates consomem os lotes mais antigos primeiro e tributam pela idade de cada lote. Posições antigas sem lotes são preservadas como um lote agregado na data original, pois não há informação histórica suficiente para inventar datas individuais. A projeção também tributa cada contribuição por sua idade. Progressivo representa retenção de 15%, sem ajuste anual, benefício de dedução ou cálculo atuarial. A renda futura é consumo após resgate integral hipotético, sem promessa de renda vitalícia.
-
-**Crédito/FGC:** proteção configurada de R$ 250 mil por emissor/conglomerado e R$ 1 milhão em janela móvel aproximada de quatro anos; recebimento fictício após dois meses. A garantia considera crédito líquido estimado e não simula um procedimento real de pagamento. O saldo acima da proteção pode ser perdido. Consulte as limitações do glossário.
-
-**Derivativos:** somente compra de calls/puts. Operações novas usam Black–Scholes europeu com volatilidade constante, dividendos contínuos, Selic efetiva convertida em taxa contínua e Actual/365. Delta, gamma, theta, vega e rho são calculados; IV inverte um prêmio digitado e não prevê volatilidade. Contratos antigos sem identificação de modelo preservam o prêmio didático legado. No vencimento, há liquidação financeira automática. Short registra obrigação de recompra, colateral de 150%, manutenção de 30%, proventos devidos e aluguel de 3% a.a. proporcional ao tempo. Gaps podem gerar dívida. Futuros usam carregamento teórico, garantia inicial de 15% e manutenção de 8% do nocional, com ajuste no caixa a cada dia. Margem segregada não é despesa nem limite de perda; déficit vira dívida. O exemplo de hedge é um choque idealizado e não modela perfeitamente risco de base ou liquidez real.
-
-**Métricas:** retornos diários usam fechamento e fluxos externos no fechamento; TWR evita tratar aportes como rentabilidade. Risco anualizado usa 365 observações; Sharpe e alfa aproximam a referência pela taxa CDI atual. Beta/correlação exigem 30 retornos alinhados. O retorno anualizado usa a média geométrica da trajetória TWR. São medidas dependentes da amostra, não notas ou recomendações. Exposições mostram ativos positivos; obrigações, recebíveis e colateral constam da inspeção geral. Rebalanceamento não vende títulos restritos nem garante pesos exatos; considera valor em BRL, liquidez, impostos e arredondamento.
-
-**Auditoria:** cada alteração de caixa registra origem, saldo anterior, delta e saldo posterior; rendimentos, reavaliações, proventos, impostos, eventos corporativos, recebíveis e obrigações ficam no histórico. Patrimônio bruto = caixa + títulos + valores mobiliários + opções + margem + recebíveis − obrigações. Patrimônio líquido deduz provisões; lucro deduz capital externo líquido. Dados antigos não recebem uma auditoria retroativa inventada.
-
-Referências conceituais: [FGC — garantia](https://www.fgc.org.br/sobre-garantia-fgc), [Susep — PGBL e VGBL](https://www.gov.br/susep/pt-br/assuntos/meu-futuro-seguro/seguros-previdencia-e-capitalizacao/providencia-complementar-aberta/pgbl-vgbl), [Receita Federal — IN 1.585/2015](https://normas.receita.fazenda.gov.br/sijut2consulta/consulta/normas.fazenda.gov.br/sijut2consulta/link.action?idAto=67494&visao=original). Referência de opções: [OIC/OCC — gregas](https://prd-web.optionseducation.org/advancedconcepts/understanding-options-greeks). O aplicativo mantém as simplificações declaradas acima.
-
-## Desenvolvimento e verificação
-
-Requer Node.js 22.13 ou superior. Instale dependências com `npm install` e execute `npm run dev` para o projeto. Para gerar o arquivo solicitado: `npm run build:html`. Verificações: `npm test` e `npm run typecheck`.
-
-90 testes cobrem a versão anterior e os novos motores: juros, taxas equivalentes, impostos, calendário, marcação a mercado, cupons, carência, FGC, ordens, médias, dividendos, câmbio, fundos, come-cotas, aportes, rebalanceamento, previdência, margens, opções, métricas, determinismo, replay, migração, serialização e invariantes de caixa/patrimônio.
-
-A interface foi verificada em Chromium via arquivo local, sem internet, em desktop e celular: 49 fluxos, incluindo análise/compra, regimes previdenciários, curso ativo, universos, replay, recarga, migração de dados V1, operações avançadas, pausa automática e restauração via IndexedDB quando o salvamento simples excede sua quota. Os scripts e imagens de QA ficam em `.sites-runtime/qa/`, sem fazer parte do HTML.
-
-**Revisão de cobertura:** veja `COBERTURA.md` para os 40 itens do pedido, onde experimentar cada um e as simplificações mantidas. Futuros, gregas, cotização futura, lotes previdenciários, desafios específicos, aulas individuais, correlação entre ativos, replay comparável e rebalanceamento de renda fixa são agora funcionalidades executáveis. Ouro e título estrangeiro continuam proxies de mercado; índices usam cestas reduzidas e não componentes reais completos. O livro não casa ordens de usuários, não há conexão a corretora, exercício americano, venda descoberta de opções ou renda vitalícia. Esses limites são do modelo educacional, não operações reais incompletas.
+- [Cobertura e limites da simulação](COBERTURA.md)
+- [Histórico, arquitetura e convenções do modelo](HISTORICO.md)
